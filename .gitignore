@@ -1,0 +1,20 @@
+# Archhivos Compilados
+*.class
+
+# Carpetas de construcción de Maven (ignorar los empaquetados de cada microservicio)
+target/
+*.jar
+*.war
+*.ear
+
+# Configuraciones de Entornos de Desarrollo (IDEs)
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
