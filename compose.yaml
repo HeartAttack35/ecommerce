@@ -1,0 +1,151 @@
+services:
+  # 1. Base de datos para Seguridad y Usuarios
+  mysql-auth:
+    image: mysql:8
+    container_name: mysql-auth
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: b_auth
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: 1234
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_auth_data:/var/lib/mysql
+    networks:
+      - backend-network
+  
+  # 2. Base de datos para Productos
+  mysql-producto:
+    image: mysql:8
+    container_name: mysql-producto
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: db_producto
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: 1234
+    ports:
+      - "3308:3306"
+    volumes:
+      - mysql_producto_data:/var/lib/mysql
+    networks:
+      - backend-network
+  
+  # 3. Base de datos para Clientes
+  mysql-cliente:
+    image: mysql:8
+    container_name: mysql-cliente
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: db_cliente
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: 1234
+    ports:
+      - "3309:3306"
+    volumes:
+      - mysql_cliente_data:/var/lib/mysql
+    networks:
+      - backend-network
+
+  # 4. Base de datos para Pedidos
+  mysql-pedido:
+    image: mysql:8
+    container_name: mysql-pedido
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: db_pedido
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: 1234
+    ports:
+      - "3310:3306"
+    volumes:
+      - mysql_pedido_data:/var/lib/mysql
+    networks:
+      - backend-network
+  
+  # 5. Base de datos para Pagos
+  mysql-pago:
+    image: mysql:8
+    container_name: mysql-pago
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: db_pago
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: 1234
+    ports:
+      - "3311:3306"
+    volumes:
+      - mysql_pago_data:/var/lib/mysql
+    networks:
+      - backend-network
+
+  # 6. Base de datos para Inventario
+  mysql-inventario:
+    image: mysql:8
+    container_name: mysql-inventario
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: db_inventario
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: 1234
+    ports:
+      - "3312:3306"
+    volumes:
+      - mysql_inventario_data:/var/lib/mysql
+    networks:
+      - backend-network
+
+  # 7. Base de datos para Envíos
+  mysql-envio:
+    image: mysql:8
+    container_name: mysql-envio
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: db_envio
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: 1234
+    ports:
+      - "3313:3306"
+    volumes:
+      - mysql_envio_data:/var/lib/mysql
+    networks:
+      - backend-network
+  
+  # 8. Base de datos para Notificaciones
+  mysql-notificacion:
+    image: mysql:8
+    container_name: mysql-notificacion
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: db_notificacion
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: 1234
+    ports:
+      - "3314:3306"
+    volumes:
+      - mysql_notificacion_data:/var/lib/mysql
+    networks:
+      - backend-network
+
+# Definición de la Red Interna
+networks:
+  backend-network:
+
+# Definición de los Volúmenes Persistentes
+volumes:
+  mysql_auth_data:
+  mysql_producto_data:
+  mysql_cliente_data:
+  mysql_pedido_data:
+  mysql_pago_data:
+  mysql_inventario_data:
+  mysql_envio_data:
+  mysql_notificacion_data:
