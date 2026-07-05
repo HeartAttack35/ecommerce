@@ -59,6 +59,13 @@ public class InventarioController {
         return ResponseEntity.ok(recurso);
     }
 
+    @GetMapping("/producto/{productoId}/stock")
+    @Operation(summary = "Obtener stock disponible por producto", description = "Retorna únicamente la cantidad disponible de un producto. Usado por ms-pedido vía Feign.")
+    public ResponseEntity<Integer> obtenerStockPorProducto(@PathVariable Long productoId) {
+        Inventario inventario = inventarioService.buscarPorProducto(productoId);
+        return ResponseEntity.ok(inventario.getCantidadDisponible());
+    }
+
     @PostMapping
     @Operation(summary = "Crear registro de inventario", description = "Registra el stock inicial de un producto. Solo se permite un registro por producto")
     public ResponseEntity<EntityModel<Inventario>> crear(@Valid @RequestBody InventarioRequestDTO dto) {
