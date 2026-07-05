@@ -1,12 +1,14 @@
 services:
-  # 1. Base de datos para Seguridad y Usuarios
+
+  # ─── Bases de Datos ────────────────────────────────────────────────────────
+
   mysql-auth:
     image: mysql:8
     container_name: mysql-auth
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: b_auth
+      MYSQL_DATABASE: db_auth
       MYSQL_USER: appuser
       MYSQL_PASSWORD: 1234
     ports:
@@ -15,8 +17,7 @@ services:
       - mysql_auth_data:/var/lib/mysql
     networks:
       - backend-network
-  
-  # 2. Base de datos para Productos
+
   mysql-producto:
     image: mysql:8
     container_name: mysql-producto
@@ -32,8 +33,7 @@ services:
       - mysql_producto_data:/var/lib/mysql
     networks:
       - backend-network
-  
-  # 3. Base de datos para Clientes
+
   mysql-cliente:
     image: mysql:8
     container_name: mysql-cliente
@@ -50,7 +50,6 @@ services:
     networks:
       - backend-network
 
-  # 4. Base de datos para Pedidos
   mysql-pedido:
     image: mysql:8
     container_name: mysql-pedido
@@ -66,8 +65,7 @@ services:
       - mysql_pedido_data:/var/lib/mysql
     networks:
       - backend-network
-  
-  # 5. Base de datos para Pagos
+
   mysql-pago:
     image: mysql:8
     container_name: mysql-pago
@@ -84,7 +82,6 @@ services:
     networks:
       - backend-network
 
-  # 6. Base de datos para Inventario
   mysql-inventario:
     image: mysql:8
     container_name: mysql-inventario
@@ -101,7 +98,6 @@ services:
     networks:
       - backend-network
 
-  # 7. Base de datos para Envíos
   mysql-envio:
     image: mysql:8
     container_name: mysql-envio
@@ -117,8 +113,7 @@ services:
       - mysql_envio_data:/var/lib/mysql
     networks:
       - backend-network
-  
-  # 8. Base de datos para Notificaciones
+
   mysql-notificacion:
     image: mysql:8
     container_name: mysql-notificacion
@@ -135,11 +130,199 @@ services:
     networks:
       - backend-network
 
-# Definición de la Red Interna
+  # ─── Infraestructura ───────────────────────────────────────────────────────
+
+  ms-eureka:
+    build: ./ms-eureka
+    container_name: ms-eureka
+    restart: unless-stopped
+    ports:
+      - "8761:8761"
+    networks:
+      - backend-network
+
+  ms-gateway:
+    build: ./ms-gateway
+    container_name: ms-gateway
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      EUREKA_URL: http://ms-eureka:8761/eureka/
+    depends_on:
+      - ms-eureka
+    networks:
+      - backend-network
+
+  # ─── Microservicios de Negocio ─────────────────────────────────────────────
+
+  ms-auth:
+    build: ./ms-auth
+    container_name: ms-auth
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      PORT: 8081
+      DB_HOST: mysql-auth
+      DB_PORT: 3306
+      DB_NAME: db_auth
+      DB_USER: appuser
+      DB_PASSWORD: 1234
+      JWT_SECRET: ecommerce_secreto_super_seguro_1234567890
+      EUREKA_URL: http://ms-eureka:8761/eureka/
+    depends_on:
+      - mysql-auth
+      - ms-eureka
+    networks:
+      - backend-network
+
+  ms-producto:
+    build: ./ms-producto
+    container_name: ms-producto
+    restart: unless-stopped
+    ports:
+      - "8083:8083"
+    environment:
+      DB_HOST: mysql-producto
+      DB_PORT: 3306
+      DB_NAME: db_producto
+      DB_USER: appuser
+      DB_PASSWORD: 1234
+      JWT_SECRET: ecommerce_secreto_super_seguro_1234567890
+      EUREKA_URL: http://ms-eureka:8761/eureka/
+    depends_on:
+      - mysql-producto
+      - ms-eureka
+    networks:
+      - backend-network
+
+  ms-cliente:
+    build: ./ms-cliente
+    container_name: ms-cliente
+    restart: unless-stopped
+    ports:
+      - "8082:8082"
+    environment:
+      DB_HOST: mysql-cliente
+      DB_PORT: 3306
+      DB_NAME: db_cliente
+      DB_USER: appuser
+      DB_PASSWORD: 1234
+      JWT_SECRET: ecommerce_secreto_super_seguro_1234567890
+      EUREKA_URL: http://ms-eureka:8761/eureka/
+    depends_on:
+      - mysql-cliente
+      - ms-eureka
+    networks:
+      - backend-network
+
+  ms-inventario:
+    build: ./ms-inventario
+    container_name: ms-inventario
+    restart: unless-stopped
+    ports:
+      - "8084:8084"
+    environment:
+      DB_HOST: mysql-inventario
+      DB_PORT: 3306
+      DB_NAME: db_inventario
+      DB_USER: appuser
+      DB_PASSWORD: 1234
+      JWT_SECRET: ecommerce_secreto_super_seguro_1234567890
+      EUREKA_URL: http://ms-eureka:8761/eureka/
+    depends_on:
+      - mysql-inventario
+      - ms-eureka
+    networks:
+      - backend-network
+
+  ms-pedido:
+    build: ./ms-pedido
+    container_name: ms-pedido
+    restart: unless-stopped
+    ports:
+      - "8088:8088"
+    environment:
+      DB_HOST: mysql-pedido
+      DB_PORT: 3306
+      DB_NAME: db_pedido
+      DB_USER: appuser
+      DB_PASSWORD: 1234
+      JWT_SECRET: ecommerce_secreto_super_seguro_1234567890
+      EUREKA_URL: http://ms-eureka:8761/eureka/
+    depends_on:
+      - mysql-pedido
+      - ms-eureka
+      - ms-inventario
+    networks:
+      - backend-network
+
+  ms-pago:
+    build: ./ms-pago
+    container_name: ms-pago
+    restart: unless-stopped
+    ports:
+      - "8085:8085"
+    environment:
+      DB_HOST: mysql-pago
+      DB_PORT: 3306
+      DB_NAME: db_pago
+      DB_USER: appuser
+      DB_PASSWORD: 1234
+      JWT_SECRET: ecommerce_secreto_super_seguro_1234567890
+      EUREKA_URL: http://ms-eureka:8761/eureka/
+    depends_on:
+      - mysql-pago
+      - ms-eureka
+    networks:
+      - backend-network
+
+  ms-envio:
+    build: ./ms-envio
+    container_name: ms-envio
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    environment:
+      DB_HOST: mysql-envio
+      DB_PORT: 3306
+      DB_NAME: db_envio
+      DB_USER: appuser
+      DB_PASSWORD: 1234
+      JWT_SECRET: ecommerce_secreto_super_seguro_1234567890
+      EUREKA_URL: http://ms-eureka:8761/eureka/
+    depends_on:
+      - mysql-envio
+      - ms-eureka
+    networks:
+      - backend-network
+
+  ms-notificacion:
+    build: ./ms-notificacion
+    container_name: ms-notificacion
+    restart: unless-stopped
+    ports:
+      - "8087:8087"
+    environment:
+      DB_HOST: mysql-notificacion
+      DB_PORT: 3306
+      DB_NAME: db_notificacion
+      DB_USER: appuser
+      DB_PASSWORD: 1234
+      JWT_SECRET: ecommerce_secreto_super_seguro_1234567890
+      EUREKA_URL: http://ms-eureka:8761/eureka/
+    depends_on:
+      - mysql-notificacion
+      - ms-eureka
+    networks:
+      - backend-network
+
+# ─── Red y Volúmenes ──────────────────────────────────────────────────────────
+
 networks:
   backend-network:
 
-# Definición de los Volúmenes Persistentes
 volumes:
   mysql_auth_data:
   mysql_producto_data:
