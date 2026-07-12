@@ -130,6 +130,54 @@ services:
     networks:
       - backend-network
 
+  mysql-carrito:
+    image: mysql:8
+    container_name: mysql-carrito
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: db_carrito
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: 1234
+    ports:
+      - "3315:3306"
+    volumes:
+      - mysql_carrito_data:/var/lib/mysql
+    networks:
+      - backend-network
+
+  mysql-promocion:
+    image: mysql:8
+    container_name: mysql-promocion
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: db_promocion
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: 1234
+    ports:
+      - "3316:3306"
+    volumes:
+      - mysql_promocion_data:/var/lib/mysql
+    networks:
+      - backend-network
+
+  mysql-resena:
+    image: mysql:8
+    container_name: mysql-resena
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: db_resena
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: 1234
+    ports:
+      - "3317:3306"
+    volumes:
+      - mysql_resena_data:/var/lib/mysql
+    networks:
+      - backend-network
+
   # ─── Infraestructura ───────────────────────────────────────────────────────
 
   ms-eureka:
@@ -318,6 +366,69 @@ services:
     networks:
       - backend-network
 
+  ms-carrito:
+    build: ./ms-carrito
+    container_name: ms-carrito
+    restart: unless-stopped
+    ports:
+      - "8089:8089"
+    environment:
+      PORT: 8089
+      DB_HOST: mysql-carrito
+      DB_PORT: 3306
+      DB_NAME: db_carrito
+      DB_USER: appuser
+      DB_PASSWORD: 1234
+      JWT_SECRET: ecommerce_secreto_super_seguro_1234567890
+      EUREKA_URL: http://ms-eureka:8761/eureka/
+    depends_on:
+      - mysql-carrito
+      - ms-eureka
+    networks:
+      - backend-network
+
+  ms-promocion:
+    build: ./ms-promocion
+    container_name: ms-promocion
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    environment:
+      PORT: 8090
+      DB_HOST: mysql-promocion
+      DB_PORT: 3306
+      DB_NAME: db_promocion
+      DB_USER: appuser
+      DB_PASSWORD: 1234
+      JWT_SECRET: ecommerce_secreto_super_seguro_1234567890
+      EUREKA_URL: http://ms-eureka:8761/eureka/
+    depends_on:
+      - mysql-promocion
+      - ms-eureka
+    networks:
+      - backend-network
+
+  ms-resena:
+    build: ./ms-resena
+    container_name: ms-resena
+    restart: unless-stopped
+    ports:
+      - "8091:8091"
+    environment:
+      PORT: 8091
+      DB_HOST: mysql-resena
+      DB_PORT: 3306
+      DB_NAME: db_resena
+      DB_USER: appuser
+      DB_PASSWORD: 1234
+      JWT_SECRET: ecommerce_secreto_super_seguro_1234567890
+      EUREKA_URL: http://ms-eureka:8761/eureka/
+    depends_on:
+      - mysql-resena
+      - ms-eureka
+    networks:
+      - backend-network
+
 # ─── Red y Volúmenes ──────────────────────────────────────────────────────────
 
 networks:
@@ -332,3 +443,6 @@ volumes:
   mysql_inventario_data:
   mysql_envio_data:
   mysql_notificacion_data:
+  mysql_carrito_data:
+  mysql_promocion_data:
+  mysql_resena_data:
