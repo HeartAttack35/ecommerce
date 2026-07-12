@@ -13,8 +13,8 @@ Plataforma de comercio electrónico construida sobre una arquitectura de microse
 5. [Comunicación entre servicios](#comunicación-entre-servicios)
 6. [Variables de entorno](#variables-de-entorno)
 7. [Requisitos previos](#requisitos-previos)
-8. [Despliegue local con Docker Compose](#despliegue-local-con-docker-compose)
-9. [Compilar los JARs antes de levantar](#compilar-los-jars-antes-de-levantar)
+8. [Compilar los JARs antes de levantar](#compilar-los-jars-antes-de-levantar)
+9. [Despliegue local con Docker Compose](#despliegue-local-con-docker-compose)
 10. [Documentación de la API (Swagger)](#documentación-de-la-api-swagger)
 11. [Pruebas unitarias y cobertura](#pruebas-unitarias-y-cobertura)
 12. [Despliegue en la Nube](#despliegue-en-la-nube)
@@ -36,35 +36,57 @@ Cliente HTTP
 │  ms-eureka  │ :8761  │  Registro y descubrimiento de servicios       │
 └─────────────┘        └──────────────────────────────────────────────┘
        │ se registran
-       ├── ms-auth        :8081   BD: mysql-auth
-       ├── ms-cliente     :8082   BD: mysql-cliente
-       ├── ms-producto    :8083   BD: mysql-producto
-       ├── ms-inventario  :8084   BD: mysql-inventario
-       ├── ms-pago        :8085   BD: mysql-pago
-       ├── ms-envio       :8086   BD: mysql-envio
-       ├── ms-notificacion :8087  BD: mysql-notificacion
-       └── ms-pedido      :8088   BD: mysql-pedido
-                              └── Feign ──► ms-inventario
+       ├── ms-auth         :8081   BD: mysql-auth        (3307)
+       ├── ms-cliente       :8082   BD: mysql-cliente     (3309)
+       ├── ms-producto      :8083   BD: mysql-producto    (3308)
+       ├── ms-inventario    :8084   BD: mysql-inventario  (3312)
+       ├── ms-pago          :8085   BD: mysql-pago        (3311)
+       ├── ms-envio         :8086   BD: mysql-envio       (3313)
+       ├── ms-notificacion  :8087   BD: mysql-notificacion(3314)
+       ├── ms-pedido        :8088   BD: mysql-pedido      (3310)
+       │                       └── Feign ──► ms-inventario
+       ├── ms-carrito       :8089   BD: mysql-carrito     (3315)
+       ├── ms-promocion     :8090   BD: mysql-promocion   (3316)
+       └── ms-resena        :8091   BD: mysql-resena      (3317)
 ```
 
 Todos los servicios comparten la red interna `backend-network` de Docker. Ningún microservicio de negocio es accesible desde el exterior sin pasar por el gateway.
+
+**Rutas del Gateway:**
+
+| Ruta pública           | Microservicio destino |
+|------------------------|-----------------------|
+| `/api/auth/**`         | ms-auth               |
+| `/api/clientes/**`     | ms-cliente            |
+| `/api/productos/**`    | ms-producto           |
+| `/api/inventario/**`   | ms-inventario         |
+| `/api/pedidos/**`      | ms-pedido             |
+| `/api/pagos/**`        | ms-pago               |
+| `/api/envios/**`       | ms-envio              |
+| `/api/notificaciones/**` | ms-notificacion     |
+| `/api/carrito/**`      | ms-carrito            |
+| `/api/promociones/**`  | ms-promocion          |
+| `/api/resenas/**`      | ms-resena             |
 
 ---
 
 ## Microservicios
 
-| Servicio | Puerto | Responsabilidad |
-|---|---|---|
-| **ms-eureka** | 8761 | Servidor de descubrimiento (Eureka Server) |
-| **ms-gateway** | 8080 | API Gateway — enrutamiento y balanceo de carga |
-| **ms-auth** | 8081 | Autenticación y emisión de tokens JWT |
-| **ms-cliente** | 8082 | Gestión de clientes registrados |
-| **ms-producto** | 8083 | Catálogo de productos |
-| **ms-inventario** | 8084 | Control de stock y disponibilidad |
-| **ms-pago** | 8085 | Procesamiento de pagos |
-| **ms-envio** | 8086 | Despacho y seguimiento de envíos |
-| **ms-notificacion** | 8087 | Envío de notificaciones (EMAIL, SMS, PUSH) |
-| **ms-pedido** | 8088 | Creación y seguimiento de pedidos |
+| Servicio | Puerto | Build | Responsabilidad |
+|---|---|---|---|
+| **ms-eureka** | 8761 | Maven | Servidor de descubrimiento (Eureka Server) |
+| **ms-gateway** | 8080 | Maven | API Gateway — enrutamiento y balanceo de carga |
+| **ms-auth** | 8081 | Maven | Autenticación y emisión de tokens JWT |
+| **ms-cliente** | 8082 | Maven | Gestión de clientes registrados |
+| **ms-producto** | 8083 | Maven | Catálogo de productos |
+| **ms-inventario** | 8084 | Maven | Control de stock y disponibilidad |
+| **ms-pago** | 8085 | Maven | Procesamiento de pagos |
+| **ms-envio** | 8086 | Maven | Despacho y seguimiento de envíos |
+| **ms-notificacion** | 8087 | Maven | Envío de notificaciones (EMAIL, SMS, PUSH) |
+| **ms-pedido** | 8088 | Maven | Creación y seguimiento de pedidos |
+| **ms-carrito** | 8089 | Gradle | Carrito de compras: ítems, confirmación |
+| **ms-promocion** | 8090 | Gradle | Códigos de descuento y validación de vigencia |
+| **ms-resena** | 8091 | Gradle | Reseñas y puntuaciones de productos |
 
 ---
 
@@ -77,7 +99,7 @@ Todos los servicios comparten la red interna `backend-network` de Docker. Ningú
 - **Spring HATEOAS** — respuestas hipermedia (nivel 3 REST)
 - **springdoc-openapi 2.6.0** — documentación automática Swagger/OpenAPI
 - **Lombok** — reducción de boilerplate
-- **MySQL 8** — base de datos por microservicio
+- **MySQL 8** — base de datos por microservicio (13 instancias)
 - **Docker** + **Docker Compose** — contenedorización
 - **JUnit 5** + **Mockito** + **JaCoCo** — pruebas unitarias y cobertura
 
@@ -90,7 +112,7 @@ Ningún microservicio confía en otro por defecto. Cada request interna debe inc
 **Flujo de autenticación:**
 
 ```
-1. POST /auth/login  →  ms-auth emite un JWT firmado con jwt.secret
+1. POST /api/auth/login  →  ms-auth emite un JWT firmado con jwt.secret
 2. El cliente incluye el token en cada request:
    Authorization: Bearer <token>
 3. El JwtFilter de cada microservicio valida la firma antes de procesar
@@ -139,8 +161,9 @@ Cada microservicio de negocio acepta las siguientes variables. Todos tienen valo
 
 ## Requisitos previos
 
-- **Docker** ≥ 24 y **Docker Compose** v2
-- **Java 21** y **Maven** (solo para compilar los JARs localmente)
+- **Docker** >= 24 y **Docker Compose** v2
+- **Java 21** y **Maven** (para compilar los JARs de los servicios Maven)
+- **Gradle** (los servicios Gradle compilan dentro del contenedor Docker)
 - Git
 
 ```bash
@@ -154,10 +177,14 @@ java --version
 
 ## Compilar los JARs antes de levantar
 
-Docker Compose hace `build` desde el `Dockerfile` de cada servicio, que copia el JAR desde `target/`. Por eso hay que compilar primero:
+El proyecto tiene dos tipos de servicios según su herramienta de build:
+
+**Servicios Maven** (necesitan JAR pre-compilado antes de `docker compose up`):
+
+Sus `Dockerfile` copian el JAR desde `target/`, por lo que hay que compilarlos primero:
 
 ```bash
-# Desde la raíz del proyecto, compilar todos los microservicios
+# Desde la raíz del proyecto
 for ms in ms-eureka ms-gateway ms-auth ms-cliente ms-producto \
            ms-inventario ms-pedido ms-pago ms-envio ms-notificacion; do
   echo "▶ Compilando $ms..."
@@ -168,27 +195,30 @@ done
 O uno a uno:
 
 ```bash
-cd ms-pedido
-./mvnw clean package -DskipTests
-cd ..
+cd ms-auth && ./mvnw clean package -DskipTests && cd ..
 ```
+
+**Servicios Gradle** (ms-carrito, ms-promocion, ms-resena):
+
+Usan un `Dockerfile` multi-stage que **compila dentro del contenedor**. No requieren pasos previos — `docker compose up --build` se encarga de todo.
 
 ---
 
 ## Despliegue local con Docker Compose
 
-Con los JARs compilados, levantar toda la plataforma es un solo comando:
+Con los JARs Maven compilados, levantar toda la plataforma es un solo comando:
 
 ```bash
 # Construir imágenes y levantar todos los contenedores en segundo plano
 docker compose up --build -d
 ```
 
-**Orden de arranque recomendado** (Docker Compose lo gestiona con `depends_on`):
-1. Bases de datos MySQL (8 instancias)
+**Orden de arranque** (gestionado automáticamente por `depends_on`):
+1. 13 instancias de MySQL
 2. `ms-eureka`
-3. `ms-gateway` + microservicios de negocio
-4. `ms-pedido` (último, depende de `ms-inventario`)
+3. Microservicios de negocio (en paralelo)
+4. `ms-gateway`
+5. `ms-pedido` (último, depende de `ms-inventario`)
 
 **Comandos útiles:**
 
@@ -197,7 +227,7 @@ docker compose up --build -d
 docker compose ps
 
 # Ver logs de un servicio específico
-docker compose logs -f ms-pedido
+docker compose logs -f ms-carrito
 
 # Detener y eliminar contenedores (conserva los volúmenes de BD)
 docker compose down
@@ -206,7 +236,7 @@ docker compose down
 docker compose down -v
 
 # Reiniciar un servicio individual sin afectar al resto
-docker compose restart ms-producto
+docker compose restart ms-promocion
 ```
 
 **Verificar que Eureka registró los servicios:**
@@ -221,7 +251,7 @@ http://localhost:8761
 
 Cada microservicio expone su propia UI de Swagger. Las rutas `/swagger-ui/**` y `/v3/api-docs/**` están abiertas sin necesidad de token.
 
-| Servicio | URL Swagger |
+| Servicio | URL Swagger local |
 |---|---|
 | ms-auth | http://localhost:8081/swagger-ui/index.html |
 | ms-cliente | http://localhost:8082/swagger-ui/index.html |
@@ -231,6 +261,9 @@ Cada microservicio expone su propia UI de Swagger. Las rutas `/swagger-ui/**` y 
 | ms-envio | http://localhost:8086/swagger-ui/index.html |
 | ms-notificacion | http://localhost:8087/swagger-ui/index.html |
 | ms-pedido | http://localhost:8088/swagger-ui/index.html |
+| ms-carrito | http://localhost:8089/swagger-ui/index.html |
+| ms-promocion | http://localhost:8090/swagger-ui/index.html |
+| ms-resena | http://localhost:8091/swagger-ui/index.html |
 
 ---
 
@@ -239,12 +272,15 @@ Cada microservicio expone su propia UI de Swagger. Las rutas `/swagger-ui/**` y 
 Las pruebas usan **JUnit 5** con **Mockito** y están en la capa de servicio de cada microservicio. No requieren base de datos ni contexto de Spring.
 
 ```bash
-# Ejecutar pruebas de un microservicio y generar reporte de cobertura
+# Servicios Maven — ejecutar pruebas y generar reporte JaCoCo
 cd ms-pedido
 ./mvnw clean test
-
-# Ver el reporte de cobertura JaCoCo en el navegador
 xdg-open target/site/jacoco/index.html
+
+# Servicios Gradle — ejecutar pruebas
+cd ms-carrito
+./gradlew test --no-daemon
+xdg-open build/reports/tests/test/index.html
 ```
 
 **Casos cubiertos por microservicio:**
@@ -258,6 +294,9 @@ xdg-open target/site/jacoco/index.html
 | ms-pago | 5 | crear, listar, actualizar estado, eliminar | not found |
 | ms-envio | 5 | crear, listar, actualizar estado, eliminar | not found |
 | ms-notificacion | 5 | enviar, listar, por cliente, eliminar | not found |
+| ms-carrito | 6 | crear, agregar ítems, confirmar, listar, buscar, eliminar | carrito duplicado, carrito vacío, not found |
+| ms-promocion | 6 | crear, validar código, listar, actualizar, desactivar, eliminar | código expirado, código duplicado, not found |
+| ms-resena | 6 | crear, listar por producto, listar por cliente, actualizar, ocultar, eliminar | reseña duplicada, not found |
 
 ---
 
@@ -271,7 +310,7 @@ El proyecto se puede desplegar en [Railway](https://railway.app) de forma indivi
 
 - Ir a [railway.app](https://railway.app) e iniciar sesión con GitHub.
 - Crear un nuevo proyecto con **"Deploy from GitHub repo"** y seleccionar el repositorio.
-- Como el repositorio tiene múltiples servicios en subcarpetas, usar **"Add Service → GitHub Repo"** y configurar el **Root Directory** apuntando a la carpeta del microservicio (ej. `/ms-producto`).
+- Como el repositorio tiene múltiples servicios en subcarpetas, usar **"Add Service → GitHub Repo"** y configurar el **Root Directory** apuntando a la carpeta del microservicio (ej. `/ms-carrito`).
 
 **2. Agregar la base de datos MySQL**
 
@@ -282,38 +321,47 @@ El proyecto se puede desplegar en [Railway](https://railway.app) de forma indivi
 
 En la pestaña **Variables** del servicio Spring Boot, agregar:
 
-| Variable | Valor |
+| Variable | Valor en Railway |
 |---|---|
 | `DB_HOST` | `${{MySQL.MYSQL_HOST}}` |
 | `DB_PORT` | `${{MySQL.MYSQL_PORT}}` |
 | `DB_NAME` | `${{MySQL.MYSQL_DATABASE}}` |
 | `DB_USER` | `${{MySQL.MYSQL_USER}}` |
 | `DB_PASSWORD` | `${{MySQL.MYSQL_PASSWORD}}` |
-| `JWT_SECRET` | _(generar una cadena segura)_ |
+| `JWT_SECRET` | _(generar una cadena segura de 32+ caracteres)_ |
 | `EUREKA_URL` | URL pública del servicio `ms-eureka` en Railway |
 
 > Railway usa la sintaxis `${{NombreServicio.VARIABLE}}` para referenciar variables entre servicios del mismo proyecto.
 
 **4. Orden de despliegue recomendado**
 
-Dado que los servicios dependen unos de otros, desplegarlos en este orden:
-
 ```
-1. ms-eureka        → copiar la URL pública generada
-2. ms-auth          → necesita mysql-auth + EUREKA_URL
-3. ms-producto      → necesita mysql-producto + EUREKA_URL
-4. ms-inventario    → necesita mysql-inventario + EUREKA_URL
-5. ms-cliente       → necesita mysql-cliente + EUREKA_URL
-6. ms-pago          → necesita mysql-pago + EUREKA_URL
-7. ms-envio         → necesita mysql-envio + EUREKA_URL
-8. ms-notificacion  → necesita mysql-notificacion + EUREKA_URL
-9. ms-pedido        → necesita mysql-pedido + EUREKA_URL + URL de ms-inventario
-10. ms-gateway      → necesita EUREKA_URL
+ 1. ms-eureka         → copiar la URL pública generada
+ 2. ms-auth           → mysql-auth    + EUREKA_URL
+ 3. ms-producto       → mysql-producto + EUREKA_URL
+ 4. ms-inventario     → mysql-inventario + EUREKA_URL
+ 5. ms-cliente        → mysql-cliente + EUREKA_URL
+ 6. ms-pago           → mysql-pago   + EUREKA_URL
+ 7. ms-envio          → mysql-envio  + EUREKA_URL
+ 8. ms-notificacion   → mysql-notificacion + EUREKA_URL
+ 9. ms-pedido         → mysql-pedido + EUREKA_URL
+10. ms-carrito        → mysql-carrito + EUREKA_URL + JWT_SECRET
+11. ms-promocion      → mysql-promocion + EUREKA_URL + JWT_SECRET
+12. ms-resena         → mysql-resena  + EUREKA_URL + JWT_SECRET
+13. ms-gateway        → EUREKA_URL (redesplegar después de agregar los 3 nuevos)
 ```
 
-**5. Consideraciones importantes**
+**5. Redespliegue del Gateway**
 
-- Railway asigna un dominio público a cada servicio (ej. `ms-producto-production.up.railway.app`). Actualizar `EUREKA_URL` en todos los servicios con la URL real de `ms-eureka`.
-- El plan gratuito de Railway tiene límite de horas de ejecución mensuales. Para un proyecto de 10 servicios se recomienda el plan **Hobby** o **Pro**.
-- En producción, `spring.jpa.hibernate.ddl-auto` debe cambiarse de `update` a `validate` para evitar modificaciones accidentales al esquema.
-- El `JWT_SECRET` debe ser el mismo valor en todos los microservicios desplegados.
+Cada vez que se agregan nuevas rutas al `application.properties` del gateway, se debe forzar un redespliegue en Railway para que el servicio lea la configuración actualizada:
+
+- En el panel de Railway, ir al servicio `ms-gateway`.
+- Pestaña **Deployments** → botón **"Redeploy"** en el último despliegue exitoso.
+
+**6. Consideraciones importantes**
+
+- Railway asigna un dominio público a cada servicio (ej. `ms-carrito-production.up.railway.app`). Actualizar `EUREKA_URL` en todos los servicios con la URL real de `ms-eureka`.
+- El plan gratuito de Railway tiene límite de horas de ejecución mensuales. Para 13 servicios se recomienda el plan **Hobby** o **Pro**.
+- En producción, cambiar `spring.jpa.hibernate.ddl-auto` de `update` a `validate` para evitar modificaciones accidentales al esquema.
+- El `JWT_SECRET` debe ser **exactamente el mismo valor** en todos los microservicios desplegados.
+- Los servicios Gradle (ms-carrito, ms-promocion, ms-resena) compilan dentro del contenedor Docker, por lo que el build en Railway puede tardar más la primera vez mientras descarga las dependencias.
